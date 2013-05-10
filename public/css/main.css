@@ -1,0 +1,54 @@
+/* micro clearfix */
+.cf:before,
+.cf:after {
+    content: " "; /* 1 */
+    display: table; /* 2 */
+}
+.cf:after {
+    clear: both;
+}
+
+body {
+  font-family: Monaco;
+  font-size: 12pt;
+  font-weight: normal;
+}
+
+input, textarea {
+  font-family: Monaco;
+  font-size: 8pt;
+  font-weight: normal;
+  border: 1px solid #ddd;
+}
+
+#map {
+  height: 600px;
+}
+
+.container {
+  padding: 20px;
+}
+
+form {
+  margin: 20px 20px;
+  float: left;
+}
+  form .label {
+  }
+  form .input {
+    padding: 5px;
+  }
+  form .input input {
+    width: 500px;
+  }
+  form .submit {
+    padding: 10px;
+  }
+    form .submit button {
+      width: 200px;
+      height: 100px;
+      background-color: #8c8;
+    }
+    form .submit button:hover {
+      cursor: pointer;
+    }
