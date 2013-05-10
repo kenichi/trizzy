@@ -12,7 +12,13 @@
     this.map.addLayer(this.tiles);
     this.map.setView([45.5165, -122.6664], 16);
 
-    this.locLayer = L.geoJson().addTo(this.map);
+    this.locLayer = L.geoJson(null, {
+      onEachFeature: function(feature, layer) {
+        if (feature.properties && feature.properties.collected_at) {
+          layer.bindPopup(feature.properties.collected_at);
+        }
+      }
+    }).addTo(this.map);
     this.triLayer = L.geoJson(null, { style: { color: "#ff7800" }}).addTo(this.map);
 
     this.locationsMapper = new LocationsMapper(this);
@@ -79,7 +85,8 @@
 
   LocationsMapper.prototype.show = function() {
     if (this.locations.length > 0) {
-      this.dl.locLayer.addData(this.locations.pop());
+      var l = this.locations.pop();
+      this.dl.locLayer.addData(l);
       setTimeout($.proxy(function(){ this.show(); }, this), this.timeout);
     }
   };
