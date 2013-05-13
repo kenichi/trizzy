@@ -180,13 +180,13 @@ var dl;
     });
 
     var at = getParameterByName('access_token');
-    if (at != null) { $('#access_token').val(at); }
+    if (at != null && at != '') { $('#access_token').val(at); }
 
     var did = getParameterByName('deviceId');
-    if (did != null) { $('#deviceId').val(did); }
+    if (did != null && did != '') { $('#deviceId').val(did); }
 
     var host = getParameterByName('host');
-    if (host != null) {
+    if (host != null && host != '') {
       dl.apiUrl = 'http://' + host + '/device/locations';
       $('#apiUrl').val(dl.apiUrl);
     }
