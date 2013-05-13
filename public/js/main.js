@@ -106,14 +106,43 @@
   };
 
   // ---
+  
+  function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+    results = regex.exec(location.search);
+    return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+  }
 
   $(function() {
 
     var dl = new DeviceLocations();
+
     $('form').submit(function() {
       dl.get();
       return false;
     });
+
+    $("#fromTimestamp").datetimepicker({
+      changeMonth: true,
+      onClose: function(selected) {
+        console.log('selected: ' + selected);
+        $("#toTimestamp").datetimepicker("option", "minDateTime", new Date(Date.parse(selected)));
+      }
+    });
+
+    $("#toTimestamp").datetimepicker({
+      changeMonth: true,
+      onClose: function(selected) {
+        $("#fromTimestamp").datetimepicker("option", "maxDateTime", new Date(Date.parse(selected)));
+      }
+    });
+
+    var at = getParameterByName('access_token');
+    if (at != null) { $('#access_token').val(at); }
+
+    var did = getParameterByName('deviceId');
+    if (did != null) { $('#deviceId').val(did); }
 
   });
 
