@@ -1,3 +1,5 @@
+var dl;
+
 (function($) {
 
   function DeviceLocations() {
@@ -10,7 +12,7 @@
 
     this.tiles = new L.tileLayer(this.tileLayerURL);
     this.map.addLayer(this.tiles);
-    this.map.setView([45.5165, -122.6664], 16);
+    this.map.setView([35.5, -100], 4);
 
     this.createLayers();
 
@@ -37,7 +39,14 @@
 
   DeviceLocations.prototype.createTriggersLayer = function() {
     if (this.triLayer != null) { this.map.removeLayer(this.triLayer); }
-    this.triLayer = L.geoJson(null, { style: { color: "#ff7800" }}).addTo(this.map);
+    this.triLayer = L.geoJson(null, {
+      style: { color: "#ff7800" },
+      onEachFeature: function(feature, layer) {
+        if (feature.properties && feature.properties.popup) {
+          layer.bindPopup(feature.properties.popup);
+        }
+      }
+    }).addTo(this.map);
   };
 
   DeviceLocations.prototype.get = function() {
@@ -85,6 +94,14 @@
       this.triggersMapper.show();
       this.locationsMapper.locations = r.locations;
       this.locationsMapper.show();
+
+      if (r.boundingBox) {
+        cs = r.boundingBox.coordinates[0];
+        var sw = new L.LatLng(cs[0][1], cs[0][0]);
+        var ne = new L.LatLng(cs[2][1], cs[2][0]);
+        var bounds = new L.LatLngBounds(sw, ne);
+        this.map.fitBounds(bounds);
+      }
     }
 
   };
@@ -135,11 +152,16 @@
 
   $(function() {
 
-    var dl = new DeviceLocations();
+    dl = new DeviceLocations();
 
     $('#submit').on('click', function(e) {
       e.preventDefault();
       dl.get();
+    });
+
+    $('#clear').on('click', function(e) {
+      e.preventDefault();
+      dl.createLayers();
     });
 
     $("#fromTimestamp").datetimepicker({
@@ -168,11 +190,6 @@
       dl.apiUrl = 'http://' + host + '/device/locations';
       $('#apiUrl').val(dl.apiUrl);
     }
-
-    $('#clear').on('click', function(e) {
-      e.preventDefault();
-      dl.createLayers();
-    });
 
   });
 
