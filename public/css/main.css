@@ -21,6 +21,8 @@ input, textarea {
   border: 1px solid #ddd;
 }
 
+.left { float: left; }
+
 #map {
   height: 600px;
 }
@@ -50,5 +52,16 @@ form {
       background-color: #8c8;
     }
     form .submit button:hover {
+      cursor: pointer;
+    }
+  form .clear {
+    padding: 10px;
+  }
+    form .clear button {
+      width: 200px;
+      height: 100px;
+      background-color: #cc8;
+    }
+    form .clear button:hover {
       cursor: pointer;
     }

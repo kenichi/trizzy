@@ -12,18 +12,32 @@
     this.map.addLayer(this.tiles);
     this.map.setView([45.5165, -122.6664], 16);
 
-    this.locLayer = L.geoJson(null, {
-      onEachFeature: function(feature, layer) {
-        if (feature.properties && feature.properties.collected_at) {
-          layer.bindPopup(feature.properties.collected_at);
-        }
-      }
-    }).addTo(this.map);
-    this.triLayer = L.geoJson(null, { style: { color: "#ff7800" }}).addTo(this.map);
+    this.createLayers();
 
     this.locationsMapper = new LocationsMapper(this);
     this.triggersMapper = new TriggersMapper(this);
 
+  };
+
+  DeviceLocations.prototype.createLayers = function() {
+    this.createLocationsLayer();
+    this.createTriggersLayer();
+  };
+
+  DeviceLocations.prototype.createLocationsLayer = function() {
+    if (this.locLayer != null) { this.map.removeLayer(this.locLayer); }
+    this.locLayer = L.geoJson(null, {
+      onEachFeature: function(feature, layer) {
+        if (feature.properties && feature.properties.popup) {
+          layer.bindPopup(feature.properties.popup);
+        }
+      }
+    }).addTo(this.map);
+  };
+
+  DeviceLocations.prototype.createTriggersLayer = function() {
+    if (this.triLayer != null) { this.map.removeLayer(this.triLayer); }
+    this.triLayer = L.geoJson(null, { style: { color: "#ff7800" }}).addTo(this.map);
   };
 
   DeviceLocations.prototype.get = function() {
@@ -32,7 +46,7 @@
     var at;
 
     var params = {};
-    $(data).each(function(i,e) {
+    $(data).each($.proxy(function(i,e) {
       switch (e.name) {
         case "access_token":
           at = e.value;
@@ -43,7 +57,7 @@
         default:
           if (e.value) params[e.name] = e.value;
       }
-    });
+    }, this));
 
     var headers = {
       "Authorization": "Bearer " + at
@@ -91,6 +105,11 @@
     }
   };
 
+  LocationsMapper.prototype.clear = function() {
+    this.locations = [];
+    this.dl.locLayer
+  };
+
   // ---
 
   function TriggersMapper(dl) {
@@ -118,9 +137,9 @@
 
     var dl = new DeviceLocations();
 
-    $('form').submit(function() {
+    $('#submit').on('click', function(e) {
+      e.preventDefault();
       dl.get();
-      return false;
     });
 
     $("#fromTimestamp").datetimepicker({
@@ -143,6 +162,17 @@
 
     var did = getParameterByName('deviceId');
     if (did != null) { $('#deviceId').val(did); }
+
+    var host = getParameterByName('host');
+    if (host != null) {
+      dl.apiUrl = 'http://' + host + '/device/locations';
+      $('#apiUrl').val(dl.apiUrl);
+    }
+
+    $('#clear').on('click', function(e) {
+      e.preventDefault();
+      dl.createLayers();
+    });
 
   });
 
