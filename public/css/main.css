@@ -47,7 +47,7 @@ form {
     padding: 10px;
   }
     form .submit button {
-      width: 200px;
+      width: 150px;
       height: 100px;
       background-color: #8c8;
     }
@@ -58,10 +58,21 @@ form {
     padding: 10px;
   }
     form .clear button {
-      width: 200px;
+      width: 150px;
       height: 100px;
       background-color: #cc8;
     }
     form .clear button:hover {
+      cursor: pointer;
+    }
+  form .redraw {
+    padding: 10px;
+  }
+    form .redraw button {
+      width: 150px;
+      height: 100px;
+      background-color: #c8c;
+    }
+    form .redraw button:hover {
       cursor: pointer;
     }

@@ -97,7 +97,7 @@ var dl;
     if (!r.error) {
       this.triggersMapper.triggers = r.triggers;
       this.triggersMapper.show();
-      this.locationsMapper.locations = r.locations;
+      this.locationsMapper.setLocations(r.locations);
       this.locationsMapper.show();
 
       if (r.boundingBox) {
@@ -114,22 +114,27 @@ var dl;
   // ---
 
   function LocationsMapper(dl, timeout) {
-    this.locations = [];
+    this.setLocations([]);
     this.timeout = timeout || 25;
     this.dl = dl;
   };
 
+  LocationsMapper.prototype.setLocations = function(ls) {
+    this.locations = ls.slice(0);
+    this._locations = ls.slice(0);
+  };
+
   LocationsMapper.prototype.show = function() {
-    if (this.locations.length > 0) {
-      var l = this.locations.pop();
+    if (this._locations.length > 0) {
+      var l = this._locations.pop();
       this.dl.locLayer.addData(l);
       setTimeout($.proxy(function(){ this.show(); }, this), this.timeout);
     }
   };
 
-  LocationsMapper.prototype.clear = function() {
-    this.locations = [];
-    this.dl.locLayer
+  LocationsMapper.prototype.resetLocations = function(timeout) {
+    this.setLocations(this.locations);
+    this.timeout = timeout || 25;
   };
 
   // ---
@@ -167,6 +172,13 @@ var dl;
     $('#clear').on('click', function(e) {
       e.preventDefault();
       dl.createLayers();
+    });
+
+    $('#redraw').on('click', function(e) {
+      e.preventDefault();
+      dl.createLocationsLayer();
+      dl.locationsMapper.resetLocations(250);
+      dl.locationsMapper.show();
     });
 
     $("#fromTimestamp").datetimepicker({
