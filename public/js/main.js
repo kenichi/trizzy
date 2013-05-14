@@ -59,12 +59,13 @@ var dl;
       switch (e.name) {
         case "access_token":
           at = e.value;
+          // params['token'] = at;
           break;
         case "apiUrl":
           this.apiUrl = e.value;
           break;
         default:
-          if (e.value) params[e.name] = e.value;
+          if (e.value) { params[e.name] = e.value; }
       }
     }, this));
 
@@ -76,8 +77,12 @@ var dl;
     $('#response').val("waiting...");
 
     $.ajax({
+      method: "POST",
+      contentType: "application/json",
+      dataType: 'json',
       url: this.apiUrl,
-      data: params,
+      data: JSON.stringify(params),
+      processData: false,
       headers: headers
     }).done($.proxy(this.handleGetResponse, this));
 
@@ -166,14 +171,15 @@ var dl;
 
     $("#fromTimestamp").datetimepicker({
       changeMonth: true,
+      dateFormat: 'yy-mm-dd',
       onClose: function(selected) {
-        console.log('selected: ' + selected);
         $("#toTimestamp").datetimepicker("option", "minDateTime", new Date(Date.parse(selected)));
       }
     });
 
     $("#toTimestamp").datetimepicker({
       changeMonth: true,
+      dateFormat: 'yy-mm-dd',
       onClose: function(selected) {
         $("#fromTimestamp").datetimepicker("option", "maxDateTime", new Date(Date.parse(selected)));
       }
