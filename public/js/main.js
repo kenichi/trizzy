@@ -5,7 +5,7 @@ var dl;
   function DeviceLocations() {
 
     this.tileLayerURL = 'http://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
-    this.apiUrl = 'http://geotriggersdev.arcgis.com/device/locations';
+    this.apiUrl = 'https://geotrigger.arcgis.com/device/locations';
     $('#apiUrl').val(this.apiUrl);
 
     this.map = L.map('map');
@@ -70,7 +70,8 @@ var dl;
     }, this));
 
     var headers = {
-      "Authorization": "Bearer " + at
+      "Authorization": "Bearer " + at,
+      "Loqization": "e0af7131723bea614df2bff9527dc4f5350d0c6dbca067a455529778d6578240"
     };
 
     $('.submit button').attr("disabled", true);
