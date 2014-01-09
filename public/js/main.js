@@ -117,11 +117,14 @@ var dl;
 
     if (!r.error) {
       this.triggersMapper.triggers = r.triggers;
+      this.getTriggerHistory();
+      /*
       this.triggersHistory = {};
       $(r.triggers).each($.proxy(function(i,t) {
         var id = t.geojson.properties.popup;
         this.triggersHistory[id] = new TriggerHistory(this, id);
       }, this));
+      */
       this.triggersMapper.show();
       this.locationsMapper.setLocations(r.locations);
       // this.locationsMapper.show();
@@ -135,6 +138,25 @@ var dl;
       }
     }
 
+  };
+
+  DeviceLocations.prototype.getTriggerHistory = function() {
+    var ids = $(this.triggersMapper.triggers).map(function(i,t) { return t.geojson.properties.popup; }).toArray();
+    var params = {
+      triggerIds: ids,
+      deviceIds: this.params.deviceId,
+      fromTimestamp: this.params.fromTimestamp,
+      toTimestamp: this.params.toTimestamp
+    };
+    $.ajax({
+      method: "POST",
+      contentType: "application/json",
+      dataType: 'json',
+      url: 'https://geotrigger.arcgis.com/trigger/history',
+      data: JSON.stringify(params),
+      processData: false,
+      headers: { Authorization: this.at }
+    }).done($.proxy(function(r) { this.triggerHistory = r; }, this));
   };
   
   // ---
@@ -157,7 +179,6 @@ var dl;
       max: this.locations.length - 1,
       change: $.proxy(function(e, slider) {
         this.index = slider.value;
-        console.log(this.index);
         this.showStep();
       }, this)
     });
@@ -245,9 +266,10 @@ var dl;
     this.triggerId = triggerId;
     var params = {
       triggerIds: this.triggerId,
-      fromTimestamp: this.dl.params['fromTimestamp'],
-      toTimestamp: this.dl.params['toTimestamp']
-    };
+      deviceIds: this.dl.params.deviceId,
+      fromTimestamp: this.dl.params.fromTimestamp,
+      toTimestamp: this.dl.params.toTimestamp
+   };
     $.ajax({
       method: "POST",
       contentType: "application/json",
