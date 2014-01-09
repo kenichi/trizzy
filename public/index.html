@@ -94,8 +94,8 @@
               <div class="clear left">
                 <button id="clear">clear!</button>
               </div>
-              <div class="redraw left">
-                <button id="redraw">redraw!</button>
+              <div class="step left">
+                <button id="step" disabled>step!</button>
               </div>
             </div>
 
@@ -106,6 +106,15 @@
           <textarea id="response" rows="25" cols="80" placeholder="no reponse yet..."></textarea>
         </div>
 
+        <div class="steps">
+          <input type="text" disabled id="current-step"/><br/>
+          total: <span id="total-steps"></span>
+        </div>
+
+      </div>
+
+      <div class="container cf">
+        <div id="slider"></div>
       </div>
 
     </div>

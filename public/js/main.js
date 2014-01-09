@@ -22,13 +22,34 @@ var dl;
   };
 
   DeviceLocations.prototype.createLayers = function() {
-    this.createLocationsLayer();
+    this.createLocationsLayers();
     this.createTriggersLayer();
   };
 
-  DeviceLocations.prototype.createLocationsLayer = function() {
+  DeviceLocations.prototype.createLocationsLayers = function() {
+    if (this.prevLocLayer != null) { this.map.removeLayer(this.prevLocLayer); }
+    this.prevLocLayer = L.geoJson(null, {
+      style: { color: "#ff0000" },
+      onEachFeature: function(feature, layer) {
+        if (feature.properties && feature.properties.popup) {
+          layer.bindPopup(feature.properties.popup);
+        }
+      }
+    }).addTo(this.map);
+
     if (this.locLayer != null) { this.map.removeLayer(this.locLayer); }
     this.locLayer = L.geoJson(null, {
+      style: { color: "#00ff00" },
+      onEachFeature: function(feature, layer) {
+        if (feature.properties && feature.properties.popup) {
+          layer.bindPopup(feature.properties.popup);
+        }
+      }
+    }).addTo(this.map);
+
+    if (this.nextLocLayer != null) { this.map.removeLayer(this.nextLocLayer); }
+    this.nextLocLayer = L.geoJson(null, {
+      style: { color: "#0000ff" },
       onEachFeature: function(feature, layer) {
         if (feature.properties && feature.properties.popup) {
           layer.bindPopup(feature.properties.popup);
@@ -52,25 +73,24 @@ var dl;
   DeviceLocations.prototype.get = function() {
 
     var data = $('form').serializeArray();
-    var at;
 
-    var params = {};
+    this.params = {};
     $(data).each($.proxy(function(i,e) {
       switch (e.name) {
         case "access_token":
-          at = e.value;
+          this.at = e.value;
           // params['token'] = at;
           break;
         case "apiUrl":
           this.apiUrl = e.value;
           break;
         default:
-          if (e.value) { params[e.name] = e.value; }
+          if (e.value) { this.params[e.name] = e.value; }
       }
     }, this));
 
     var headers = {
-      "Authorization": "Bearer " + at,
+      "Authorization": "Bearer " + this.at,
       "Loqization": "e0af7131723bea614df2bff9527dc4f5350d0c6dbca067a455529778d6578240"
     };
 
@@ -82,7 +102,7 @@ var dl;
       contentType: "application/json",
       dataType: 'json',
       url: this.apiUrl,
-      data: JSON.stringify(params),
+      data: JSON.stringify(this.params),
       processData: false,
       headers: headers
     }).done($.proxy(this.handleGetResponse, this));
@@ -97,9 +117,14 @@ var dl;
 
     if (!r.error) {
       this.triggersMapper.triggers = r.triggers;
+      this.triggersHistory = {};
+      $(r.triggers).each($.proxy(function(i,t) {
+        var id = t.geojson.properties.popup;
+        this.triggersHistory[id] = new TriggerHistory(this, id);
+      }, this));
       this.triggersMapper.show();
       this.locationsMapper.setLocations(r.locations);
-      this.locationsMapper.show();
+      // this.locationsMapper.show();
 
       if (r.boundingBox) {
         cs = r.boundingBox.coordinates[0];
@@ -123,19 +148,74 @@ var dl;
   LocationsMapper.prototype.setLocations = function(ls) {
     this.locations = ls.slice(0);
     this._locations = ls.slice(0);
+    $('#step').attr('disabled', null);
+    $('#total-steps').html(this.locations.length);
+    this.index = 0;
+    $('#current-step').val(this.index);
+    $('#slider').slider({
+      min: 0,
+      max: this.locations.length - 1,
+      change: $.proxy(function(e, slider) {
+        this.index = slider.value;
+        console.log(this.index);
+        this.showStep();
+      }, this)
+    });
+  };
+
+  /*
+  LocationsMapper.prototype.showStep = function() {
+    if (this._locations.length > 0) {
+      this.index++;
+      $('#current-step').val(this.index);
+      var l = this._locations.pop();
+      this.dl.locLayer.addData(l);
+    }
   };
 
   LocationsMapper.prototype.show = function() {
     if (this._locations.length > 0) {
-      var l = this._locations.pop();
-      this.dl.locLayer.addData(l);
+      this.showStep();
       setTimeout($.proxy(function(){ this.show(); }, this), this.timeout);
     }
   };
+  */
 
   LocationsMapper.prototype.resetLocations = function(timeout) {
     this.setLocations(this.locations);
     this.timeout = timeout || 25;
+  };
+
+  LocationsMapper.prototype.showStep = function() {
+    this.dl.createLocationsLayers();
+    if (this.index == 0) {
+      this.showLocation();
+      this.showNextLocation();
+    } else if (this.index == (this.locations.length - 1)) {
+      this.showPrevLocation();
+      this.showLocation();
+    } else {
+      this.showPrevLocation();
+      this.showLocation();
+      this.showNextLocation();
+    }
+  };
+
+  LocationsMapper.prototype.step = function() {
+    this.showStep;
+    this.index++;
+  };
+
+  LocationsMapper.prototype.showPrevLocation = function() {
+    this.dl.prevLocLayer.addData(this.locations[this.index - 1]);
+  };
+  
+  LocationsMapper.prototype.showLocation = function() {
+    this.dl.locLayer.addData(this.locations[this.index]);
+  };
+
+  LocationsMapper.prototype.showNextLocation = function() {
+    this.dl.nextLocLayer.addData(this.locations[this.index + 1]);
   };
 
   // ---
@@ -150,6 +230,37 @@ var dl;
     $(this.triggers).each(function(i,e) {
       self.dl.triLayer.addData(e.geojson);
     });
+  };
+
+  // ---
+
+  // ---
+
+  function TriggerHistory(dl, triggerId) {
+    this.dl = dl;
+    this.setTriggerId(triggerId);
+  };
+
+  TriggerHistory.prototype.setTriggerId = function(triggerId) {
+    this.triggerId = triggerId;
+    var params = {
+      triggerIds: this.triggerId,
+      fromTimestamp: this.dl.params['fromTimestamp'],
+      toTimestamp: this.dl.params['toTimestamp']
+    };
+    $.ajax({
+      method: "POST",
+      contentType: "application/json",
+      dataType: 'json',
+      url: 'https://geotrigger.arcgis.com/trigger/history',
+      data: JSON.stringify(params),
+      processData: false,
+      headers: { Authorization: this.dl.at }
+    }).done($.proxy(this.handleGetResponse, this));
+  };
+
+  TriggerHistory.prototype.handleGetResponse = function(r) {
+    this.history = r;
   };
 
   // ---
@@ -175,11 +286,19 @@ var dl;
       dl.createLayers();
     });
 
+    /*
     $('#redraw').on('click', function(e) {
       e.preventDefault();
       dl.createLocationsLayer();
       dl.locationsMapper.resetLocations(250);
       dl.locationsMapper.show();
+    });
+    */
+
+    $('#step').on('click', function(e) {
+      e.preventDefault();
+      // dl.locationsMapper.showStep();
+      dl.locationsMapper.step();
     });
 
     $("#fromTimestamp").datetimepicker({
@@ -209,6 +328,12 @@ var dl;
       dl.apiUrl = 'http://' + host + '/device/locations';
       $('#apiUrl').val(dl.apiUrl);
     }
+
+    var fromTs = getParameterByName('fromTimestamp');
+    if (fromTs !== null && fromTs !== '') { $('#fromTimestamp').val(new Date(fromTs).toISOString()); }
+    
+    var toTs = getParameterByName('toTimestamp');
+    if (toTs !== null && toTs !== '') { $('#toTimestamp').val(new Date(toTs).toISOString()); }
 
   });
 

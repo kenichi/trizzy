@@ -65,14 +65,14 @@ form {
     form .clear button:hover {
       cursor: pointer;
     }
-  form .redraw {
+  form .step {
     padding: 10px;
   }
-    form .redraw button {
+    form .step button {
       width: 150px;
       height: 100px;
       background-color: #c8c;
     }
-    form .redraw button:hover {
+    form .step button:hover {
       cursor: pointer;
     }
